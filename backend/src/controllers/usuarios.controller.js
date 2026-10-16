@@ -1,19 +1,15 @@
-import mongoose from "mongoose";
-import Rol from "../models/Rol.js";
-import Usuario from "../models/Usuario.js";
+import { supabase } from "../config/db.js";
+import { esUuid, q } from "../utils/consulta.js";
 import { HttpError, asyncHandler } from "../utils/httpError.js";
 
 export const listar = asyncHandler(async (req, res) => {
-  const lista = await Usuario.find().sort({ creado_en: -1 }).lean();
-  res.json(
-    lista.map((u) => ({
-      id: String(u._id),
-      nombre: u.nombre,
-      correo: u.correo,
-      rol: u.rol,
-      creado_en: u.creado_en,
-    }))
+  const lista = await q(
+    supabase
+      .from("usuarios")
+      .select("id, nombre, correo, rol, creado_en")
+      .order("creado_en", { ascending: false })
   );
+  res.json(lista);
 });
 
 export const asignarRol = asyncHandler(async (req, res) => {
@@ -21,13 +17,11 @@ export const asignarRol = asyncHandler(async (req, res) => {
   const { rol } = req.body;
   const actor = req.user;
 
-  if (!mongoose.isValidObjectId(id)) throw new HttpError(404, "Usuario no encontrado");
+  if (!esUuid(id)) throw new HttpError(404, "Usuario no encontrado");
 
-  if (String(actor._id) === id) {
-    throw new HttpError(400, "No puedes cambiar tu propio rol");
-  }
+  if (actor.id === id) throw new HttpError(400, "No puedes cambiar tu propio rol");
 
-  const destino = await Usuario.findById(id);
+  const destino = await q(supabase.from("usuarios").select("id, rol").eq("id", id).maybeSingle());
   if (!destino) throw new HttpError(404, "Usuario no encontrado");
 
   // Solo un administrador puede tocar cuentas admin o entregar el rol admin
@@ -35,9 +29,9 @@ export const asignarRol = asyncHandler(async (req, res) => {
     throw new HttpError(403, "Solo un administrador puede hacer esto");
   }
 
-  if (!(await Rol.exists({ nombre: rol }))) throw new HttpError(404, "El rol no existe");
+  const existeRol = await q(supabase.from("roles").select("nombre").eq("nombre", rol).maybeSingle());
+  if (!existeRol) throw new HttpError(404, "El rol no existe");
 
-  destino.rol = rol;
-  await destino.save();
+  await q(supabase.from("usuarios").update({ rol }).eq("id", id));
   res.json({ ok: true });
 });

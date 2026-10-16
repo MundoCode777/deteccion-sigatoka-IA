@@ -1,6 +1,6 @@
-import Rol from "../models/Rol.js";
-import Usuario from "../models/Usuario.js";
+import { supabase } from "../config/db.js";
 import { PERMISOS } from "../config/permisos.js";
+import { q } from "../utils/consulta.js";
 import { HttpError, asyncHandler } from "../utils/httpError.js";
 
 const limpiarPermisos = (lista) => {
@@ -10,11 +10,14 @@ const limpiarPermisos = (lista) => {
   return [...new Set(lista)].sort();
 };
 
+const buscarRol = (nombre) =>
+  q(supabase.from("roles").select("nombre, permisos").eq("nombre", nombre).maybeSingle());
+
 export const catalogo = (req, res) =>
   res.json(Object.entries(PERMISOS).map(([clave, nombre]) => ({ clave, nombre })));
 
 export const listar = asyncHandler(async (req, res) => {
-  const lista = await Rol.find().sort({ nombre: 1 }).lean();
+  const lista = await q(supabase.from("roles").select("nombre, permisos").order("nombre"));
   res.json(
     lista.map((r) => ({
       nombre: r.nombre,
@@ -26,12 +29,16 @@ export const listar = asyncHandler(async (req, res) => {
 export const crear = asyncHandler(async (req, res) => {
   const { nombre, permisos } = req.body;
 
-  if (await Rol.exists({ nombre })) {
-    throw new HttpError(409, "Ya existe un rol con ese nombre");
-  }
+  if (await buscarRol(nombre)) throw new HttpError(409, "Ya existe un rol con ese nombre");
 
-  const rol = await Rol.create({ nombre, permisos: limpiarPermisos(permisos) });
-  res.status(201).json({ nombre: rol.nombre, permisos: rol.permisos });
+  const rol = await q(
+    supabase
+      .from("roles")
+      .insert({ nombre, permisos: limpiarPermisos(permisos) })
+      .select("nombre, permisos")
+      .single()
+  );
+  res.status(201).json(rol);
 });
 
 export const modificar = asyncHandler(async (req, res) => {
@@ -43,18 +50,20 @@ export const modificar = asyncHandler(async (req, res) => {
     throw new HttpError(400, "El rol tecnico no se puede renombrar");
   }
 
-  const rol = await Rol.findOne({ nombre: actual });
-  if (!rol) throw new HttpError(404, "El rol no existe");
+  if (!(await buscarRol(actual))) throw new HttpError(404, "El rol no existe");
 
-  if (nombre !== actual) {
-    if (nombre === "admin" || (await Rol.exists({ nombre }))) {
-      throw new HttpError(409, "Ya existe un rol con ese nombre");
-    }
-    await Usuario.updateMany({ rol: actual }, { $set: { rol: nombre } });
-    rol.nombre = nombre;
+  // Los usuarios con este rol se actualizan solos (on update cascade)
+  if (nombre !== actual && (nombre === "admin" || (await buscarRol(nombre)))) {
+    throw new HttpError(409, "Ya existe un rol con ese nombre");
   }
 
-  rol.permisos = limpiarPermisos(permisos);
-  await rol.save();
-  res.json({ nombre: rol.nombre, permisos: rol.permisos });
+  const rol = await q(
+    supabase
+      .from("roles")
+      .update({ nombre, permisos: limpiarPermisos(permisos) })
+      .eq("nombre", actual)
+      .select("nombre, permisos")
+      .single()
+  );
+  res.json(rol);
 });

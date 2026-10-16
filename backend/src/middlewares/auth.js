@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
-import Usuario from "../models/Usuario.js";
+import { supabase } from "../config/db.js";
 import { env } from "../config/env.js";
+import { esUuid, q } from "../utils/consulta.js";
 import { HttpError, asyncHandler } from "../utils/httpError.js";
 import { permisosDe } from "../utils/usuario.js";
 
@@ -17,9 +17,9 @@ export const autenticar = asyncHandler(async (req, res, next) => {
   } catch {
     throw sesionInvalida;
   }
-  if (!mongoose.isValidObjectId(datos.sub)) throw sesionInvalida;
+  if (!esUuid(datos.sub)) throw sesionInvalida;
 
-  const user = await Usuario.findById(datos.sub);
+  const user = await q(supabase.from("usuarios").select("*").eq("id", datos.sub).maybeSingle());
   if (!user || !user.activo) throw sesionInvalida;
 
   req.user = user;

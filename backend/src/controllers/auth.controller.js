@@ -1,7 +1,8 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import Usuario from "../models/Usuario.js";
+import { supabase } from "../config/db.js";
 import { env } from "../config/env.js";
+import { q } from "../utils/consulta.js";
 import { HttpError, asyncHandler } from "../utils/httpError.js";
 import { aUsuarioOut } from "../utils/usuario.js";
 
@@ -21,7 +22,7 @@ const estaBloqueado = (correo) => {
 const DUMMY_HASH = bcrypt.hashSync("dummy-password-123", 12);
 
 const firmarToken = (user) =>
-  jwt.sign({ sub: String(user._id) }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRA });
+  jwt.sign({ sub: user.id }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRA });
 
 const respuestaToken = async (user) => ({
   access_token: firmarToken(user),
@@ -32,16 +33,21 @@ const respuestaToken = async (user) => ({
 export const registro = asyncHandler(async (req, res) => {
   const { nombre, correo, password } = req.body;
 
-  if (await Usuario.exists({ correo })) {
-    throw new HttpError(409, "Ese correo ya está registrado");
-  }
+  const existe = await q(supabase.from("usuarios").select("id").eq("correo", correo).maybeSingle());
+  if (existe) throw new HttpError(409, "Ese correo ya está registrado");
 
-  const user = await Usuario.create({
-    nombre,
-    correo,
-    password_hash: await bcrypt.hash(password, 12),
-    rol: "tecnico",
-  });
+  const user = await q(
+    supabase
+      .from("usuarios")
+      .insert({
+        nombre,
+        correo,
+        password_hash: await bcrypt.hash(password, 12),
+        rol: "tecnico",
+      })
+      .select()
+      .single()
+  );
 
   res.status(201).json(await respuestaToken(user));
 });
@@ -53,7 +59,7 @@ export const login = asyncHandler(async (req, res) => {
     throw new HttpError(429, "Demasiados intentos. Espera 5 minutos e inténtalo de nuevo");
   }
 
-  const user = await Usuario.findOne({ correo });
+  const user = await q(supabase.from("usuarios").select("*").eq("correo", correo).maybeSingle());
   const valido = await bcrypt.compare(password, user?.password_hash ?? DUMMY_HASH);
 
   if (!user || !valido || !user.activo) {

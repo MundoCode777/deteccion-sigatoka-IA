@@ -17,7 +17,7 @@
 
 Este proyecto busca desarrollar un sistema que permita analizar imágenes de hojas de banano para apoyar la detección de **Sigatoka negra**, registrar los resultados obtenidos y facilitar el seguimiento de los tratamientos aplicados en los lotes de una hacienda.
 
-La aplicación contempla una interfaz web desarrollada con **React**, el uso de **Supabase** para la gestión de datos y autenticación, y un modelo de inteligencia artificial basado en una **red neuronal convolucional (CNN)** para la clasificación de imágenes tanto en tiempo real.
+La aplicación contempla una interfaz web desarrollada con **React**, el uso de **Supabase** para la gestión de datos y autenticación, y un modelo de inteligencia artificial basado en una **red neuronal convolucional (CNN)** para la clasificación de imágenes.
 
 > **Estado del proyecto:** En desarrollo. Las tecnologías y funcionalidades se implementarán progresivamente.
 

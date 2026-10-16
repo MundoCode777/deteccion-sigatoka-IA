@@ -8,9 +8,6 @@ export const manejarErrores = (err, req, res, next) => {
   if (err instanceof HttpError) {
     return res.status(err.status).json({ detail: err.message });
   }
-  if (err?.code === 11000) {
-    return res.status(409).json({ detail: "Ya existe un registro con esos datos" });
-  }
   if (err?.status && err.status < 500) {
     return res.status(err.status).json({ detail: "Solicitud inválida" });
   }

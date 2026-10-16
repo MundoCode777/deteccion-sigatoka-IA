@@ -1,6 +1,6 @@
 import app from "./src/app.js";
-import { env } from "./src/config/env.js";
 import { conectarDB } from "./src/config/db.js";
+import { env } from "./src/config/env.js";
 import { sembrarDatos } from "./src/config/seed.js";
 
 try {
