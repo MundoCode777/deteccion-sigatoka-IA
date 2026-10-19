@@ -67,3 +67,24 @@ export const modificar = asyncHandler(async (req, res) => {
   );
   res.json(rol);
 });
+
+export const eliminar = asyncHandler(async (req, res) => {
+  const nombre = req.params.nombre.toLowerCase();
+
+  if (nombre === "admin" || nombre === "tecnico") {
+    throw new HttpError(400, `El rol ${nombre} no se puede eliminar`);
+  }
+
+  if (!(await buscarRol(nombre))) throw new HttpError(404, "El rol no existe");
+
+  const usuarios = await q(supabase.from("usuarios").select("id").eq("rol", nombre));
+  if (usuarios.length > 0) {
+    throw new HttpError(
+      409,
+      `No se puede eliminar: ${usuarios.length} usuario(s) tienen este rol. Cámbiales el rol primero`
+    );
+  }
+
+  await q(supabase.from("roles").delete().eq("nombre", nombre));
+  res.json({ ok: true });
+});

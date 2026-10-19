@@ -6,6 +6,7 @@ import AuthLayout from "../components/AuthLayout";
 import Input from "../components/Input";
 import PasswordInput from "../components/PasswordInput";
 import { useAuth } from "../context/AuthContext";
+import { alertaOk } from "../utils/alertas";
 
 export default function Login() {
   const { login } = useAuth();
@@ -21,6 +22,7 @@ export default function Login() {
     setEnviando(true);
     try {
       await login(correo.trim(), password);
+      alertaOk("¡Bienvenido!", "Iniciaste sesión correctamente");
       navigate("/", { replace: true });
     } catch (err) {
       setError(err.message);

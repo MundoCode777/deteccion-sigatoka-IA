@@ -3,6 +3,7 @@ import { ChevronDown, LogOut, Menu, PanelLeftClose, PanelLeftOpen, User } from "
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { alertaInfo } from "../../utils/alertas";
 
 const TITULOS = {
   "/": "Inicio",
@@ -26,6 +27,11 @@ export default function Topbar({ colapsado, onMenuMovil, onToggleColapso }) {
   }, []);
 
   useEffect(() => setMenu(false), [pathname]);
+
+  const cerrarSesion = () => {
+    logout();
+    alertaInfo("Sesión cerrada", "¡Hasta pronto!");
+  };
 
   const iniciales = usuario.nombre
     .split(" ")
@@ -97,7 +103,7 @@ export default function Topbar({ colapsado, onMenuMovil, onToggleColapso }) {
                   <User className="h-4 w-4" /> Mi perfil
                 </Link>
                 <button
-                  onClick={logout}
+                  onClick={cerrarSesion}
                   className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-red-600 hover:bg-red-50"
                 >
                   <LogOut className="h-4 w-4" /> Cerrar sesión

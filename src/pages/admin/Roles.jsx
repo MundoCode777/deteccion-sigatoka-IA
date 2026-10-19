@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
-import { Loader2, Lock, Plus, Save, ShieldCheck } from "lucide-react";
+import { Loader2, Lock, Plus, Save, ShieldCheck, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import Cargando from "../../components/Cargando";
 import Mensaje from "../../components/Mensaje";
 import { useAuth } from "../../context/AuthContext";
+import { alertaError, alertaOk, confirmar } from "../../utils/alertas";
 
 const GRUPOS = {
   usuarios: "Usuarios",
@@ -16,12 +17,13 @@ const GRUPOS = {
 };
 
 export default function Roles() {
-  const { usuario, getToken, actualizarUsuario } = useAuth();
+  const { getToken, actualizarUsuario } = useAuth();
   const [roles, setRoles] = useState([]);
   const [catalogo, setCatalogo] = useState([]);
   const [sel, setSel] = useState(null); // { original, nombre, permisos }
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
   const [msg, setMsg] = useState(null);
 
   const cargarRoles = async () => setRoles(await api("/roles", { token: getToken() }));
@@ -35,6 +37,7 @@ export default function Roles() {
       })
       .catch((err) => setMsg({ tipo: "error", texto: err.message }))
       .finally(() => setCargando(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const seleccionar = (r) => {
@@ -71,11 +74,34 @@ export default function Roles() {
       await cargarRoles();
       actualizarUsuario(await api("/auth/me", { token })); // por si cambió tus propios permisos
       seleccionar(res);
-      setMsg({ tipo: "ok", texto: esNuevo ? "Rol creado correctamente" : "Rol actualizado correctamente" });
+      alertaOk(esNuevo ? "Rol creado" : "Rol actualizado", `El rol "${res.nombre}" se guardó correctamente`);
     } catch (err) {
       setMsg({ tipo: "error", texto: err.message });
     } finally {
       setGuardando(false);
+    }
+  };
+
+  const eliminar = async () => {
+    const aceptar = await confirmar({
+      titulo: "¿Eliminar este rol?",
+      texto: `Se eliminará el rol "${sel.original}". Esta acción no se puede deshacer.`,
+      textoConfirmar: "Sí, eliminar",
+      peligro: true,
+    });
+    if (!aceptar) return;
+
+    setEliminando(true);
+    try {
+      await api(`/roles/${encodeURIComponent(sel.original)}`, { method: "DELETE", token: getToken() });
+      await cargarRoles();
+      alertaOk("Rol eliminado", `El rol "${sel.original}" fue eliminado`);
+      setSel(null);
+      setMsg(null);
+    } catch (err) {
+      alertaError("No se pudo eliminar", err.message);
+    } finally {
+      setEliminando(false);
     }
   };
 
@@ -195,18 +221,37 @@ export default function Roles() {
               {msg && <Mensaje tipo={msg.tipo}>{msg.texto}</Mensaje>}
 
               {!esAdmin && (
-                <button
-                  disabled={guardando}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-700 to-green-600 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-700/25 transition hover:shadow-emerald-700/40 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-8"
-                >
-                  {guardando ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" /> Guardar rol
-                    </>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <button
+                    disabled={guardando || eliminando}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-700 to-green-600 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-700/25 transition hover:shadow-emerald-700/40 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-8"
+                  >
+                    {guardando ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" /> Guardar rol
+                      </>
+                    )}
+                  </button>
+
+                  {sel.original && !nombreFijo && (
+                    <button
+                      type="button"
+                      onClick={eliminar}
+                      disabled={guardando || eliminando}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-6"
+                    >
+                      {eliminando ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4" /> Eliminar rol
+                        </>
+                      )}
+                    </button>
                   )}
-                </button>
+                </div>
               )}
             </motion.form>
           )}

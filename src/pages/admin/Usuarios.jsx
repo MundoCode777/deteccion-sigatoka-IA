@@ -5,6 +5,7 @@ import { api } from "../../api/client";
 import Cargando from "../../components/Cargando";
 import Mensaje from "../../components/Mensaje";
 import { useAuth } from "../../context/AuthContext";
+import { alertaError, alertaOk, confirmar } from "../../utils/alertas";
 
 const iniciales = (nombre) =>
   nombre
@@ -22,7 +23,7 @@ export default function Usuarios() {
   const [busqueda, setBusqueda] = useState("");
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(null);
-  const [msg, setMsg] = useState(null);
+  const [errorCarga, setErrorCarga] = useState("");
 
   const puedeAsignar = tiene("usuarios.asignar_rol");
 
@@ -33,19 +34,28 @@ export default function Usuarios() {
         setLista(u);
         setRoles(r);
       })
-      .catch((err) => setMsg({ tipo: "error", texto: err.message }))
+      .catch((err) => setErrorCarga(err.message))
       .finally(() => setCargando(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cambiarRol = async (u, rol) => {
-    setMsg(null);
+    if (rol === u.rol) return;
+
+    const aceptar = await confirmar({
+      titulo: "¿Cambiar el rol?",
+      texto: `${u.nombre} pasará de "${u.rol}" a "${rol}".`,
+      textoConfirmar: "Sí, cambiar",
+    });
+    if (!aceptar) return;
+
     setGuardando(u.id);
     try {
       await api(`/usuarios/${u.id}/rol`, { method: "PUT", body: { rol }, token: getToken() });
       setLista((l) => l.map((x) => (x.id === u.id ? { ...x, rol } : x)));
-      setMsg({ tipo: "ok", texto: `Ahora ${u.nombre} tiene el rol "${rol}"` });
+      alertaOk("Rol actualizado", `${u.nombre} ahora es "${rol}"`);
     } catch (err) {
-      setMsg({ tipo: "error", texto: err.message });
+      alertaError("No se pudo cambiar el rol", err.message);
     } finally {
       setGuardando(null);
     }
@@ -75,7 +85,7 @@ export default function Usuarios() {
         </div>
       </div>
 
-      {msg && <Mensaje tipo={msg.tipo}>{msg.texto}</Mensaje>}
+      {errorCarga && <Mensaje tipo="error">{errorCarga}</Mensaje>}
 
       <div className="space-y-3">
         {filtrados.map((u, i) => {
