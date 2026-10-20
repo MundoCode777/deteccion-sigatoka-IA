@@ -8,6 +8,7 @@
 ![Supabase](https://img.shields.io/badge/Database-Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![Python](https://img.shields.io/badge/IA-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![CNN](https://img.shields.io/badge/Modelo-CNN-6C5CE7?style=for-the-badge)
+![SVN](https://img.shields.io/badge/Modelo-SVN-6C5CE7?style=for-the-badge)
 
 </div>
 
