@@ -41,3 +41,27 @@ export const rolSchema = z.object({
     .regex(/^[a-záéíóúñ0-9 _-]+$/, "El nombre solo puede tener letras, números, espacios, - y _"),
   permisos: z.array(z.string()).default([]),
 });
+
+const coordenada = (etiqueta, min, max) =>
+  z
+    .number({ message: `${etiqueta} no es válida` })
+    .min(min, `${etiqueta} debe estar entre ${min} y ${max}`)
+    .max(max, `${etiqueta} debe estar entre ${min} y ${max}`);
+
+const puntoMapa = z.tuple([coordenada("La latitud", -90, 90), coordenada("La longitud", -180, 180)]);
+
+export const loteSchema = z.object({
+  nombre: z
+    .string()
+    .trim()
+    .min(2, "El nombre del lote debe tener al menos 2 caracteres")
+    .max(60, "El nombre del lote es muy largo"),
+  latitud: coordenada("La latitud", -90, 90),
+  longitud: coordenada("La longitud", -180, 180),
+  poligono: z
+    .array(puntoMapa)
+    .min(3, "El área necesita al menos 3 puntos")
+    .max(100, "El área tiene demasiados puntos")
+    .nullable()
+    .optional(),
+});

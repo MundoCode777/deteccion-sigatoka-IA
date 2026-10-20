@@ -5,6 +5,8 @@ export const PERMISOS = {
   "roles.gestionar": "Crear y modificar roles",
   "lotes.ver": "Ver lotes",
   "lotes.crear": "Registrar lotes",
+  "lotes.editar": "Editar lotes",
+  "lotes.eliminar": "Eliminar lotes",
   "detecciones.crear": "Realizar detecciones",
   "detecciones.ver": "Ver detecciones",
   "tratamientos.registrar": "Registrar tratamientos",

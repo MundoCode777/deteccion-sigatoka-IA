@@ -5,6 +5,7 @@ import Roles from "./pages/admin/Roles";
 import Usuarios from "./pages/admin/Usuarios";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
+import Lotes from "./pages/Lotes";
 import Perfil from "./pages/Perfil";
 import Register from "./pages/Register";
 
@@ -20,6 +21,10 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/perfil" element={<Perfil />} />
+
+          <Route element={<RutaPermiso permiso="lotes.ver" />}>
+            <Route path="/lotes" element={<Lotes />} />
+          </Route>
 
           <Route element={<RutaPermiso permiso="usuarios.ver" />}>
             <Route path="/admin/usuarios" element={<Usuarios />} />

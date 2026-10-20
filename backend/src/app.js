@@ -5,6 +5,7 @@ import helmet from "helmet";
 import { env } from "./config/env.js";
 import { manejarErrores, rutaNoEncontrada } from "./middlewares/errores.js";
 import authRoutes from "./routes/auth.routes.js";
+import lotesRoutes from "./routes/lotes.routes.js";
 import perfilRoutes from "./routes/perfil.routes.js";
 import rolesRoutes from "./routes/roles.routes.js";
 import usuariosRoutes from "./routes/usuarios.routes.js";
@@ -34,6 +35,7 @@ app.use("/auth", limitador, authRoutes);
 app.use("/usuarios", usuariosRoutes);
 app.use("/roles", rolesRoutes);
 app.use("/perfil", perfilRoutes);
+app.use("/lotes", lotesRoutes);
 
 app.use(rutaNoEncontrada);
 app.use(manejarErrores);

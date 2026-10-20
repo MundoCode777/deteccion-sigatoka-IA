@@ -7,6 +7,7 @@ import { alertaInfo } from "../../utils/alertas";
 
 const TITULOS = {
   "/": "Inicio",
+  "/lotes": "Lotes",
   "/perfil": "Mi perfil",
   "/admin/usuarios": "Usuarios",
   "/admin/roles": "Roles y permisos",

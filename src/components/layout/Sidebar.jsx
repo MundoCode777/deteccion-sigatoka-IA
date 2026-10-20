@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Leaf, LayoutDashboard, ShieldCheck, User, Users, X } from "lucide-react";
+import { Leaf, LayoutDashboard, MapPin, ShieldCheck, User, Users, X } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 // Aquí se irán sumando los demás módulos
 const MENU = [
   { to: "/", texto: "Inicio", icon: LayoutDashboard },
+  { to: "/lotes", texto: "Lotes", icon: MapPin, permiso: "lotes.ver" },
   { to: "/admin/usuarios", texto: "Usuarios", icon: Users, permiso: "usuarios.ver" },
   { to: "/admin/roles", texto: "Roles y permisos", icon: ShieldCheck, permiso: "roles.gestionar" },
   { to: "/perfil", texto: "Mi perfil", icon: User },
